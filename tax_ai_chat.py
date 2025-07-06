@@ -3,6 +3,10 @@ from langchain_openai import ChatOpenAI
 from langchain_experimental.agents.agent_toolkits import create_pandas_dataframe_agent
 import pandas as pd
 import os
+import io
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.stats import zscore
 
 # Set your OpenAI API key securely
 # os.environ["OPENAI_API_KEY"] = "sk-...your-key..."
@@ -19,6 +23,26 @@ if uploaded_file:
     st.write("Preview of data:")
     st.dataframe(df.head())
 
+    # Optional: Anomaly detection
+    if st.checkbox("Run basic anomaly detection on taxamount"):
+        if 'taxamount' in df.columns:
+            df['tax_zscore'] = zscore(df['taxamount'].fillna(0))
+            anomalies = df[df['tax_zscore'].abs() > 2]
+            st.markdown("### 🚨 Detected Anomalies in 'taxamount'")
+            st.dataframe(anomalies)
+        else:
+            st.warning("Column 'taxamount' not found in your data.")
+
+    # Optional: Chart rendering
+    if st.checkbox("Show collected tax by state chart"):
+        if 'situstaxareaid' in df.columns and 'taxamount' in df.columns:
+            fig, ax = plt.subplots()
+            sns.barplot(x='situstaxareaid', y='taxamount', data=df, estimator=sum, ci=None, ax=ax)
+            ax.set_title("Total Collected Tax by State")
+            st.pyplot(fig)
+        else:
+            st.warning("Required columns 'state' and 'taxamount' not found.")
+
     # Initialize the LLM and agent
     llm = ChatOpenAI(temperature=0, model="gpt-4")
     agent = create_pandas_dataframe_agent(
@@ -26,7 +50,6 @@ if uploaded_file:
         df=df,
         verbose=True,
         agent_type="openai-tools",
-        allowed_tools=["pandas"],
         allow_dangerous_code=True
     )
 
@@ -39,6 +62,14 @@ if uploaded_file:
                 response = agent.run(user_input)
                 st.markdown("### 🧠 Assistant Response")
                 st.write(response)
+
+                # Optional: Export response as text
+                st.download_button(
+                    label="📄 Download Response as TXT",
+                    data=io.StringIO(response),
+                    file_name="agent_response.txt",
+                    mime="text/plain"
+                )
             except Exception as e:
                 st.error(f"Error: {str(e)}")
 else:
