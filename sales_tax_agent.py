@@ -17,7 +17,7 @@ df = pd.DataFrame(data)
 
 # 2. Initialize LLM (use your actual OpenAI API key via environment variable)
 os.environ["OPENAI_API_KEY"] = "sk-...your-key..."
-llm = ChatOpenAI(temperature=0, model="gpt-4")
+llm = ChatOpenAI(temperature=0, model="gpt-4o")
 
 # 3. Create the Pandas Agent with the DataFrame
 agent = create_pandas_dataframe_agent(

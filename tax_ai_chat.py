@@ -59,9 +59,9 @@ if uploaded_file:
     if st.button("Submit") and user_input:
         with st.spinner("Analyzing with agent..."):
             try:
-                response = agent.run(user_input)
+                response = agent.invoke(user_input)
                 st.markdown("### 🧠 Assistant Response")
-                st.write(response)
+                st.write(response['output'])
 
                 # Optional: Export response as text
                 st.download_button(
